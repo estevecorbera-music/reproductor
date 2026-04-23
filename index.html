@@ -526,6 +526,7 @@ function loadTrack(i) {
   updateProgress(0, 0);
   renderPlaylist();
   scrollToCurrentTrack();
+  updateMediaSession();
 }
 
 function scrollToCurrentTrack() {
@@ -699,6 +700,21 @@ if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js').catch(() => {});
   });
+}
+
+function updateMediaSession() {
+  if (!('mediaSession' in navigator) || currentIndex < 0) return;
+  navigator.mediaSession.metadata = new MediaMetadata({
+    title: tracks[currentIndex].name,
+    artist: 'Reproductor Esteve',
+    album: `${currentIndex + 1} de ${tracks.length}`
+  });
+  navigator.mediaSession.setActionHandler('play', () => { playAudio(); });
+  navigator.mediaSession.setActionHandler('pause', () => { pauseAudio(); });
+  navigator.mediaSession.setActionHandler('previoustrack', () => { prevTrack(); });
+  navigator.mediaSession.setActionHandler('nexttrack', () => { nextTrack(); });
+  navigator.mediaSession.setActionHandler('seekbackward', () => { seekBack(); });
+  navigator.mediaSession.setActionHandler('seekforward', () => { seekForward(); });
 }
 </script>
 </body>

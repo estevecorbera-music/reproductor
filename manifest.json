@@ -1,6 +1,6 @@
 {
-  "name": "Reproductor",
-  "short_name": "Reproductor",
+  "name": "Reproductor Esteve",
+  "short_name": "Reproductor Esteve",
   "description": "Reproductor de música personal",
   "start_url": "/reproductor/",
   "display": "standalone",
