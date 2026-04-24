@@ -474,6 +474,7 @@ fileInput.addEventListener('change', e => {
     objectURLs.push(url);
     return { name: cleanName(f.name), url, file: f };
   });
+  tracks.sort((a, b) => a.name.localeCompare(b.name, 'ca', { sensitivity: 'base' }));
   renderPlaylist();
   playlistCount.textContent = `${tracks.length} arxiu${tracks.length !== 1 ? 's' : ''}`;
   emptyState.style.display = 'none';
@@ -535,11 +536,18 @@ function scrollToCurrentTrack() {
 }
 
 function playAudio() {
-  audio.play().then(() => { isPlaying = true; updatePlayBtn(); updateArtwork(); updateCurrentItem(); }).catch(() => {});
+  audio.play().then(() => {
+    isPlaying = true;
+    updatePlayBtn(); updateArtwork(); updateCurrentItem();
+    updateMediaSession();
+    if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
+  }).catch(() => {});
 }
 
 function pauseAudio() {
-  audio.pause(); isPlaying = false; updatePlayBtn(); updateArtwork(); updateCurrentItem();
+  audio.pause(); isPlaying = false;
+  updatePlayBtn(); updateArtwork(); updateCurrentItem();
+  if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
 }
 
 function togglePlay() {
@@ -709,12 +717,17 @@ function updateMediaSession() {
     artist: 'Reproductor Esteve',
     album: `${currentIndex + 1} de ${tracks.length}`
   });
-  navigator.mediaSession.setActionHandler('play', () => { playAudio(); });
-  navigator.mediaSession.setActionHandler('pause', () => { pauseAudio(); });
-  navigator.mediaSession.setActionHandler('previoustrack', () => { prevTrack(); });
-  navigator.mediaSession.setActionHandler('nexttrack', () => { nextTrack(); });
-  navigator.mediaSession.setActionHandler('seekbackward', () => { seekBack(); });
-  navigator.mediaSession.setActionHandler('seekforward', () => { seekForward(); });
+  // Registrem els handlers cada vegada — necessari per alguns sistemes Bluetooth
+  try {
+    navigator.mediaSession.setActionHandler('play', () => { playAudio(); });
+    navigator.mediaSession.setActionHandler('pause', () => { pauseAudio(); });
+    navigator.mediaSession.setActionHandler('stop', () => { stopPlayback(); });
+    navigator.mediaSession.setActionHandler('previoustrack', () => { prevTrack(); });
+    navigator.mediaSession.setActionHandler('nexttrack', () => { nextTrack(); });
+    navigator.mediaSession.setActionHandler('seekbackward', (d) => { audio.currentTime = Math.max(0, audio.currentTime - (d.seekOffset || 10)); });
+    navigator.mediaSession.setActionHandler('seekforward', (d) => { audio.currentTime = Math.min(audio.duration || 0, audio.currentTime + (d.seekOffset || 10)); });
+    navigator.mediaSession.setActionHandler('seekto', (d) => { if (d.seekTime != null) audio.currentTime = d.seekTime; });
+  } catch(e) {}
 }
 </script>
 </body>
